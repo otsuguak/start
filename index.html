@@ -3,206 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM PQR - Sistema de Gestión</title>
+    <title>Portal de la Copropiedad</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-50 font-sans text-gray-800">
 
-    <div id="login-section" class="flex items-center justify-center h-screen">
-        <div class="bg-white p-8 rounded-lg shadow-md w-96 border-t-4 border-blue-600">
-            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Iniciar Sesión</h2>
-            <input type="email" id="email-input" placeholder="Correo electrónico" class="w-full p-2 border rounded mb-4">
-            <input type="password" id="pass-input" placeholder="Contraseña" class="w-full p-2 border rounded mb-4">
-            <select id="role-input" class="w-full p-2 border rounded mb-6 text-gray-600">
-                <option value="usuario">Usuario (Residente)</option>
-                <option value="agente">Administrador (Resolutor)</option>
-            </select>
-            <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 font-bold transition">Ingresar</button>
-            <div class="flex justify-end mt-2 mb-4">
-                <a href="#" onclick="mostrarRecuperacion()" class="text-sm text-blue-500 hover:underline">¿Olvidaste tu contraseña?</a>
-            </div>
-            <p class="text-center mt-6 text-sm text-gray-600">
-                ¿No tienes cuenta? <a href="#" onclick="mostrarRegistro()" class="text-blue-600 hover:underline">Crear usuario nuevo</a>
-            </p>
-        </div>
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-80 flex flex-col items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+        <h2 class="text-white text-xl font-semibold animate-pulse">Actualizando cartelera...</h2>
     </div>
 
-    <div id="register-section" class="hidden flex items-center justify-center h-screen bg-gray-200">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border-t-4 border-green-600">
-            <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Registro de Usuario</h2>
+    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                <h1 class="text-2xl font-bold tracking-wide">MiConjunto<span class="text-blue-400">.</span></h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="#noticias" class="hidden md:block hover:text-blue-400 font-medium transition">Noticias</a>
+                <a href="#gimnasio" class="hidden md:block hover:text-blue-400 font-medium transition">Reserva de Gym</a>
+                <a href="crm.html" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-full font-bold shadow-md transition transform hover:scale-105">
+                    Inicia sesion
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-blue-600 text-white py-16 text-center border-b-8 border-blue-800">
+        <div class="max-w-4xl mx-auto px-4">
+            <h2 class="text-4xl font-extrabold mb-4">Cartelera Digital de la Copropiedad</h2>
+            <p class="text-xl text-blue-100">Mantente informado sobre los últimos comunicados, mantenimientos y eventos de nuestro conjunto residencial.</p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-12">
+        
+        <section id="noticias" class="mb-16">
+            <div class="flex items-center mb-8 border-b-2 border-gray-200 pb-2">
+                <h3 class="text-3xl font-bold text-gray-800">Últimas Noticias</h3>
+                <span class="ml-4 bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">En vivo</span>
+            </div>
             
-            <div class="space-y-3">
-                <input type="text" id="reg-nombre" placeholder="Nombre completo" class="w-full p-2 border rounded">
-                <input type="email" id="reg-email" placeholder="Correo electrónico" class="w-full p-2 border rounded">
+            <div id="contenedor-noticias" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                </div>
+        </section>
+
+        <section id="gimnasio" class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mb-12">
+            <div class="md:flex">
+                <div class="md:w-1/3 bg-slate-800 p-8 text-white flex flex-col justify-center items-center text-center">
+                    <svg class="w-16 h-16 text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <h3 class="text-2xl font-bold mb-2">Reserva el Gimnasio</h3>
+                    <p class="text-gray-300 text-sm">Completa el formulario para apartar tu turno. Recuerda cumplir el reglamento.</p>
+                </div>
+                <div class="md:w-2/3 p-0 min-h-[500px]">
+                    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfozaxsLL2QqfQ6OM7_YUrrcK8XYTmHt9evLMBqmfDdaZoJWA/viewform?usp=publish-editor" 
+                            width="100%" height="100%" frameborder="0" marginheight="0" marginwidth="0" class="w-full h-full min-h-[500px]">
+                        Cargando formulario...
+                    </iframe>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-6 text-center text-sm">
+        <p>&copy; 2026 Portal de Administración. Todos los derechos reservados.</p>
+    </footer>
+
+    <div id="modal-noticia" class="hidden fixed inset-0 bg-slate-900 bg-opacity-80 flex items-center justify-center p-4 z-50 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden relative transform transition-all">
+            
+            <button onclick="cerrarNoticia()" class="absolute top-4 right-4 bg-white text-gray-800 hover:text-red-500 rounded-full p-2 shadow-lg z-10 transition transform hover:scale-110">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="overflow-y-auto w-full">
+                <img id="modal-img" src="" alt="Imagen de la noticia" class="w-full h-64 md:h-80 object-cover">
                 
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="reg-rol" class="p-2 border rounded bg-gray-50 text-gray-600">
-                        <option value="usuario">Usuario</option>
-                        <option value="agente">adminitrador</option>
-                    </select>
-                    <input type="text" id="reg-inmueble" placeholder="Inmueble (Apto/Casa)" class="p-2 border rounded">
+                <div class="p-8 md:p-12">
+                    <span id="modal-categoria" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">Categoría</span>
+                    <p id="modal-fecha" class="text-sm text-gray-500 mt-4 font-semibold"></p>
+                    <h2 id="modal-titulo" class="text-3xl md:text-4xl font-extrabold text-gray-900 mt-2 mb-6 leading-tight">Título</h2>
+                    <div id="modal-contenido" class="text-gray-700 leading-relaxed whitespace-pre-wrap text-lg">
+                        </div>
                 </div>
-
-                <input type="password" id="reg-pass" placeholder="Contraseña" class="w-full p-2 border rounded">
-                <input type="password" id="reg-pass-confirm" placeholder="Confirmar contraseña" class="w-full p-2 border rounded">
-
-                <div class="flex items-center p-3 bg-gray-50 border rounded mt-2">
-                    <input type="checkbox" id="captcha" class="w-4 h-4 text-green-600 mr-2">
-                    <label for="captcha" class="text-sm font-medium text-gray-700 cursor-pointer">No soy un robot</label>
-                </div>
-
-                <button onclick="registrarUsuario()" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 font-bold mt-4">Registrarme Ahora</button>
-                <button onclick="mostrarLogin()" class="w-full text-gray-500 text-sm mt-2 hover:underline">Volver al inicio de sesión</button>
             </div>
         </div>
     </div>
-
-
-
-    <div id="recovery-section" class="hidden flex items-center justify-center h-screen bg-gray-200">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-96 border-t-4 border-yellow-500">
-            <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Recuperar Contraseña</h2>
-            <p class="text-sm text-gray-600 mb-4 text-center">Ingresa tu correo y tu número de inmueble para validar tu identidad.</p>
-            
-            <input type="email" id="rec-email" placeholder="Correo registrado" class="w-full p-2 border rounded mb-3">
-            <input type="text" id="rec-inmueble" placeholder="Inmueble (Dato de seguridad)" class="w-full p-2 border rounded mb-3">
-            
-            <hr class="my-3">
-            
-            <input type="password" id="rec-pass" placeholder="Nueva contraseña" class="w-full p-2 border rounded mb-3">
-            <button onclick="recuperarContrasena()" class="w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 font-bold transition">Cambiar Contraseña</button>
-            
-            <button onclick="ocultarRecuperacion()" class="w-full text-gray-500 text-sm mt-4 hover:underline">Cancelar y volver</button>
-        </div>
-    </div>
-
-    <div id="dashboard" class="hidden flex h-screen">
-        <nav class="w-64 bg-slate-800 text-white p-6">
-            <h1 class="text-xl font-bold mb-8 text-blue-400 text-center">CRM PQR</h1>
-            <ul class="space-y-4">
-                <li class="cursor-pointer hover:text-blue-400 font-bold border-b border-slate-700 pb-2">Panel Principal</li>
-                <li class="cursor-pointer hover:text-red-400 pt-10 text-red-300" onclick="location.reload()">Cerrar Sesión</li>
-            </ul>
-        </nav>
-
-        <main class="flex-1 p-8 overflow-y-auto">
-            <header class="flex justify-between items-center mb-8 border-b pb-4">
-                <h2 id="welcome-text" class="text-2xl font-semibold text-gray-800">Bienvenido</h2>
-                <span id="role-badge" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold capitalize">Rol</span>
-            </header>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between">
-                    <h3 class="text-lg font-bold mb-2 text-gray-700 border-b pb-2">Resumen de Gestión</h3>
-    
-                    <div class="relative h-64 w-full flex justify-center items-center">
-                <canvas id="myChart"></canvas>
-                </div>
-            </div>
-
-                <div id="form-container" class="bg-white p-6 rounded-lg shadow-sm hidden border border-gray-200">
-                    <h3 class="text-lg font-bold mb-4 text-green-600 border-b pb-2">Crear Nueva PQR</h3>
-                    <select id="pqr-tipo" class="w-full p-2 border rounded mb-2">
-                        <option value="Petición">Petición</option>
-                        <option value="Queja">Queja</option>
-                        <option value="Reclamo">Reclamo</option>
-                    </select>
-                    <textarea id="pqr-desc" placeholder="Describe tu problema aquí..." class="w-full p-2 border rounded mb-2" rows="3"></textarea>
-                    <button onclick="enviarPQR()" class="bg-green-600 text-white px-4 py-2 rounded w-full font-bold hover:bg-green-700 transition">
-                        Crear PQR
-                    </button>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">ID</th>
-                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Fecha</th> 
-                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Usuario</th>
-                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Tipo</th>
-                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Estado</th>
-                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pqr-table-body">
-                        </tbody>
-                </table>
-            </div>
-        </main>
-    </div>
-
-    
-<div id="modal-detalle" class="hidden fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-    <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-        
-        <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
-            <h3 class="font-bold text-lg">Detalle de la Solicitud</h3>
-            <button onclick="cerrarModal()" class="hover:text-gray-200 text-3xl leading-none">&times;</button>
-        </div>
-        
-        <div class="p-6 space-y-4 overflow-y-auto">
-            
-            <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded border">
-                <div><p class="text-gray-500 text-xs uppercase font-bold">ID del caso:</p><p id="det-id" class="font-bold text-blue-700"></p></div>
-                <div><p class="text-gray-500 text-xs uppercase font-bold">Estado:</p><p id="det-estado" class="font-bold"></p></div>
-                <div class="col-span-2 border-t pt-2"><p class="text-gray-500 text-xs uppercase font-bold">Usuario:</p><p id="det-email" class="font-medium"></p></div>
-                <div class="col-span-2 border-t pt-2"><p class="text-gray-500 text-xs uppercase font-bold">Descripción original:</p><p id="det-desc" class="italic text-gray-700 mt-1"></p></div>
-            </div>
-
-            <div id="vista-respuesta-usuario" class="hidden pt-2">
-                <div class="bg-green-50 p-3 rounded border border-green-200 shadow-sm">
-                    <p class="text-xs font-bold text-green-700 mb-2 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        ÚLTIMA RESPUESTA GUARDADA:
-                    </p>
-                    <p id="det-respuesta-texto" class="text-sm text-gray-800 whitespace-pre-wrap"></p>
-                </div>
-            </div>
-
-            <div id="seccion-respuesta" class="border-t pt-4">
-                <label class="block text-sm font-bold text-gray-800 mb-2">Agregar Nueva Respuesta / Actualización:</label>
-
-                <div class="mb-3 bg-blue-50 p-3 rounded border border-blue-100">
-                    <label class="text-xs text-blue-800 font-bold uppercase">1. Definir estado del caso:</label>
-                    <select id="input-estado" class="w-full p-2 border rounded text-sm bg-white mt-1 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="En Proceso">En Proceso (Seguir trabajando)</option>
-                        <option value="Cerrado">Cerrado (Finalizar caso)</option>
-                    </select>
-                </div>
-                
-                <label class="text-xs text-blue-800 font-bold uppercase ml-1">2. Redactar mensaje:</label>
-                <textarea id="input-respuesta" class="w-full p-2 border rounded h-28 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none mt-1 shadow-inner" placeholder="Escribe la actualización o solución detallada aquí..."></textarea>
-                
-                <button onclick="guardarRespuesta()" class="mt-4 w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700 transition shadow-md flex justify-center items-center">
-                    Guardar Gestión
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
-</div>
-    <script src="script.js"></script>
-<div id="msg-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
-    <div class="bg-white p-6 rounded-lg shadow-2xl w-96 transform transition-all scale-100 border-t-4 border-blue-600" id="msg-modal-content">
-        <div class="flex justify-center mb-4" id="msg-icon">
-            </div>
-        
-        <h3 id="msg-title" class="text-xl font-bold text-center text-gray-800 mb-2">Notificación</h3>
-        <p id="msg-body" class="text-gray-600 text-center mb-6">Mensaje aquí...</p>
-        
-        <button onclick="cerrarMensaje()" class="w-full bg-blue-600 text-white py-2 rounded-md font-bold hover:bg-blue-700 transition shadow-md">
-            Aceptar
-        </button>
-    </div>
-</div>
-<div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900 bg-opacity-70 flex flex-col items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300">
-    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
-    <h2 class="text-white text-xl font-semibold animate-pulse">Procesando, por favor espera...</h2>
-</div>
+    <script src="portal.js"></script>
 </body>
 </html>
