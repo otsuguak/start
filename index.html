@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM PQR - Sistema de Gestión</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div id="login-section" class="flex items-center justify-center h-screen">
+        <div class="bg-white p-8 rounded-lg shadow-md w-96 border-t-4 border-blue-600">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Iniciar Sesión</h2>
+            <input type="email" id="email-input" placeholder="Correo electrónico" class="w-full p-2 border rounded mb-4">
+            <input type="password" id="pass-input" placeholder="Contraseña" class="w-full p-2 border rounded mb-4">
+            <select id="role-input" class="w-full p-2 border rounded mb-6 text-gray-600">
+                <option value="usuario">Usuario (Residente)</option>
+                <option value="agente">Administrador (Resolutor)</option>
+            </select>
+            <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 font-bold transition">Ingresar</button>
+            <div class="flex justify-end mt-2 mb-4">
+                <a href="#" onclick="mostrarRecuperacion()" class="text-sm text-blue-500 hover:underline">¿Olvidaste tu contraseña?</a>
+            </div>
+            <p class="text-center mt-6 text-sm text-gray-600">
+                ¿No tienes cuenta? <a href="#" onclick="mostrarRegistro()" class="text-blue-600 hover:underline">Crear usuario nuevo</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="register-section" class="hidden flex items-center justify-center h-screen bg-gray-200">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border-t-4 border-green-600">
+            <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Registro de Usuario</h2>
+            
+            <div class="space-y-3">
+                <input type="text" id="reg-nombre" placeholder="Nombre completo" class="w-full p-2 border rounded">
+                <input type="email" id="reg-email" placeholder="Correo electrónico" class="w-full p-2 border rounded">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="reg-rol" class="p-2 border rounded bg-gray-50 text-gray-600">
+                        <option value="usuario">Usuario</option>
+                        <option value="agente">adminitrador</option>
+                    </select>
+                    <input type="text" id="reg-inmueble" placeholder="Inmueble (Apto/Casa)" class="p-2 border rounded">
+                </div>
+
+                <input type="password" id="reg-pass" placeholder="Contraseña" class="w-full p-2 border rounded">
+                <input type="password" id="reg-pass-confirm" placeholder="Confirmar contraseña" class="w-full p-2 border rounded">
+
+                <div class="flex items-center p-3 bg-gray-50 border rounded mt-2">
+                    <input type="checkbox" id="captcha" class="w-4 h-4 text-green-600 mr-2">
+                    <label for="captcha" class="text-sm font-medium text-gray-700 cursor-pointer">No soy un robot</label>
+                </div>
+
+                <button onclick="registrarUsuario()" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 font-bold mt-4">Registrarme Ahora</button>
+                <button onclick="mostrarLogin()" class="w-full text-gray-500 text-sm mt-2 hover:underline">Volver al inicio de sesión</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="recovery-section" class="hidden flex items-center justify-center h-screen bg-gray-200">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-96 border-t-4 border-yellow-500">
+            <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Recuperar Contraseña</h2>
+            <p class="text-sm text-gray-600 mb-4 text-center">Ingresa tu correo y tu número de inmueble para validar tu identidad.</p>
+            
+            <input type="email" id="rec-email" placeholder="Correo registrado" class="w-full p-2 border rounded mb-3">
+            <input type="text" id="rec-inmueble" placeholder="Inmueble (Dato de seguridad)" class="w-full p-2 border rounded mb-3">
+            
+            <hr class="my-3">
+            
+            <input type="password" id="rec-pass" placeholder="Nueva contraseña" class="w-full p-2 border rounded mb-3">
+            <button onclick="recuperarContrasena()" class="w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 font-bold transition">Cambiar Contraseña</button>
+            
+            <button onclick="ocultarRecuperacion()" class="w-full text-gray-500 text-sm mt-4 hover:underline">Cancelar y volver</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden flex h-screen">
+        <nav class="w-64 bg-slate-800 text-white p-6">
+            <h1 class="text-xl font-bold mb-8 text-blue-400 text-center">CRM PQR</h1>
+            <ul class="space-y-4">
+                <li class="cursor-pointer hover:text-blue-400 font-bold border-b border-slate-700 pb-2">Panel Principal</li>
+                <li class="cursor-pointer hover:text-red-400 pt-10 text-red-300" onclick="location.reload()">Cerrar Sesión</li>
+            </ul>
+        </nav>
+
+        <main class="flex-1 p-8 overflow-y-auto">
+            <header class="flex justify-between items-center mb-8 border-b pb-4">
+                <h2 id="welcome-text" class="text-2xl font-semibold text-gray-800">Bienvenido</h2>
+                <span id="role-badge" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold capitalize">Rol</span>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700 border-b pb-2">Resumen de Gestión</h3>
+    
+                    <div class="relative h-64 w-full flex justify-center items-center">
+                <canvas id="myChart"></canvas>
+                </div>
+            </div>
+
+                <div id="form-container" class="bg-white p-6 rounded-lg shadow-sm hidden border border-gray-200">
+                    <h3 class="text-lg font-bold mb-4 text-green-600 border-b pb-2">Crear Nueva PQR</h3>
+                    <select id="pqr-tipo" class="w-full p-2 border rounded mb-2">
+                        <option value="Petición">Petición</option>
+                        <option value="Queja">Queja</option>
+                        <option value="Reclamo">Reclamo</option>
+                    </select>
+                    <textarea id="pqr-desc" placeholder="Describe tu problema aquí..." class="w-full p-2 border rounded mb-2" rows="3"></textarea>
+                    <button onclick="enviarPQR()" class="bg-green-600 text-white px-4 py-2 rounded w-full font-bold hover:bg-green-700 transition">
+                        Crear PQR
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">ID</th>
+                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Fecha</th> 
+                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Usuario</th>
+                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Tipo</th>
+                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Estado</th>
+                            <th class="p-4 font-bold text-gray-600 uppercase text-xs">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pqr-table-body">
+                        </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    
+<div id="modal-detalle" class="hidden fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+        
+        <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
+            <h3 class="font-bold text-lg">Detalle de la Solicitud</h3>
+            <button onclick="cerrarModal()" class="hover:text-gray-200 text-3xl leading-none">&times;</button>
+        </div>
+        
+        <div class="p-6 space-y-4 overflow-y-auto">
+            
+            <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded border">
+                <div><p class="text-gray-500 text-xs uppercase font-bold">ID del caso:</p><p id="det-id" class="font-bold text-blue-700"></p></div>
+                <div><p class="text-gray-500 text-xs uppercase font-bold">Estado:</p><p id="det-estado" class="font-bold"></p></div>
+                <div class="col-span-2 border-t pt-2"><p class="text-gray-500 text-xs uppercase font-bold">Usuario:</p><p id="det-email" class="font-medium"></p></div>
+                <div class="col-span-2 border-t pt-2"><p class="text-gray-500 text-xs uppercase font-bold">Descripción original:</p><p id="det-desc" class="italic text-gray-700 mt-1"></p></div>
+            </div>
+
+            <div id="vista-respuesta-usuario" class="hidden pt-2">
+                <div class="bg-green-50 p-3 rounded border border-green-200 shadow-sm">
+                    <p class="text-xs font-bold text-green-700 mb-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        ÚLTIMA RESPUESTA GUARDADA:
+                    </p>
+                    <p id="det-respuesta-texto" class="text-sm text-gray-800 whitespace-pre-wrap"></p>
+                </div>
+            </div>
+
+            <div id="seccion-respuesta" class="border-t pt-4">
+                <label class="block text-sm font-bold text-gray-800 mb-2">Agregar Nueva Respuesta / Actualización:</label>
+
+                <div class="mb-3 bg-blue-50 p-3 rounded border border-blue-100">
+                    <label class="text-xs text-blue-800 font-bold uppercase">1. Definir estado del caso:</label>
+                    <select id="input-estado" class="w-full p-2 border rounded text-sm bg-white mt-1 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="En Proceso">En Proceso (Seguir trabajando)</option>
+                        <option value="Cerrado">Cerrado (Finalizar caso)</option>
+                    </select>
+                </div>
+                
+                <label class="text-xs text-blue-800 font-bold uppercase ml-1">2. Redactar mensaje:</label>
+                <textarea id="input-respuesta" class="w-full p-2 border rounded h-28 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none mt-1 shadow-inner" placeholder="Escribe la actualización o solución detallada aquí..."></textarea>
+                
+                <button onclick="guardarRespuesta()" class="mt-4 w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700 transition shadow-md flex justify-center items-center">
+                    Guardar Gestión
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+</div>
+    <script src="script.js"></script>
+<div id="msg-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white p-6 rounded-lg shadow-2xl w-96 transform transition-all scale-100 border-t-4 border-blue-600" id="msg-modal-content">
+        <div class="flex justify-center mb-4" id="msg-icon">
+            </div>
+        
+        <h3 id="msg-title" class="text-xl font-bold text-center text-gray-800 mb-2">Notificación</h3>
+        <p id="msg-body" class="text-gray-600 text-center mb-6">Mensaje aquí...</p>
+        
+        <button onclick="cerrarMensaje()" class="w-full bg-blue-600 text-white py-2 rounded-md font-bold hover:bg-blue-700 transition shadow-md">
+            Aceptar
+        </button>
+    </div>
+</div>
+<div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900 bg-opacity-70 flex flex-col items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300">
+    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+    <h2 class="text-white text-xl font-semibold animate-pulse">Procesando, por favor espera...</h2>
+</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de la Copropiedad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-80 flex flex-col items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+        <h2 class="text-white text-xl font-semibold animate-pulse">Actualizando cartelera...</h2>
+    </div>
+
+    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                <h1 class="text-2xl font-bold tracking-wide">MiConjunto<span class="text-blue-400">.</span></h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="#noticias" class="hidden md:block hover:text-blue-400 font-medium transition">Noticias</a>
+                <a href="#gimnasio" class="hidden md:block hover:text-blue-400 font-medium transition">Reserva de Gym</a>
+                <a href="index.html" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-full font-bold shadow-md transition transform hover:scale-105">
+                    Inicia sesion
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-blue-600 text-white py-16 text-center border-b-8 border-blue-800">
+        <div class="max-w-4xl mx-auto px-4">
+            <h2 class="text-4xl font-extrabold mb-4">Cartelera Digital de la Copropiedad</h2>
+            <p class="text-xl text-blue-100">Mantente informado sobre los últimos comunicados, mantenimientos y eventos de nuestro conjunto residencial.</p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-12">
+        
+        <section id="noticias" class="mb-16">
+            <div class="flex items-center mb-8 border-b-2 border-gray-200 pb-2">
+                <h3 class="text-3xl font-bold text-gray-800">Últimas Noticias</h3>
+                <span class="ml-4 bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">En vivo</span>
+            </div>
+            
+            <div id="contenedor-noticias" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                </div>
+        </section>
+
+        <section id="gimnasio" class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mb-12">
+            <div class="md:flex">
+                <div class="md:w-1/3 bg-slate-800 p-8 text-white flex flex-col justify-center items-center text-center">
+                    <svg class="w-16 h-16 text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <h3 class="text-2xl font-bold mb-2">Reserva el Gimnasio</h3>
+                    <p class="text-gray-300 text-sm">Completa el formulario para apartar tu turno. Recuerda cumplir el reglamento.</p>
+                </div>
+                <div class="md:w-2/3 p-0 min-h-[500px]">
+                    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfozaxsLL2QqfQ6OM7_YUrrcK8XYTmHt9evLMBqmfDdaZoJWA/viewform?usp=publish-editor" 
+                            width="100%" height="100%" frameborder="0" marginheight="0" marginwidth="0" class="w-full h-full min-h-[500px]">
+                        Cargando formulario...
+                    </iframe>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-6 text-center text-sm">
+        <p>&copy; 2026 Portal de Administración. Todos los derechos reservados.</p>
+    </footer>
+
+    <div id="modal-noticia" class="hidden fixed inset-0 bg-slate-900 bg-opacity-80 flex items-center justify-center p-4 z-50 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden relative transform transition-all">
+            
+            <button onclick="cerrarNoticia()" class="absolute top-4 right-4 bg-white text-gray-800 hover:text-red-500 rounded-full p-2 shadow-lg z-10 transition transform hover:scale-110">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="overflow-y-auto w-full">
+                <img id="modal-img" src="" alt="Imagen de la noticia" class="w-full h-64 md:h-80 object-cover">
+                
+                <div class="p-8 md:p-12">
+                    <span id="modal-categoria" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">Categoría</span>
+                    <p id="modal-fecha" class="text-sm text-gray-500 mt-4 font-semibold"></p>
+                    <h2 id="modal-titulo" class="text-3xl md:text-4xl font-extrabold text-gray-900 mt-2 mb-6 leading-tight">Título</h2>
+                    <div id="modal-contenido" class="text-gray-700 leading-relaxed whitespace-pre-wrap text-lg">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="portal.js"></script>
+</body>
+</html>
