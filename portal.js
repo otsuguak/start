@@ -1,11 +1,12 @@
 // ================= CONFIGURACIÓN =================
-const URL_API = "https://script.google.com/macros/s/AKfycbwYJGsjmRHYxqBHe7NrC6SitY3kKIgRdxl4JXmOJcX71aajKL9qfvjtdKdRydO7x547/exec";
+const URL_API = "https://script.google.com/macros/s/AKfycbwDlXwT4iEHLqSF9hIoz7hokmUn8l2izz9C8C1xgM9HtiRBw1KDLrd1rszbl6koe8bo/exec";
 
 let noticiasGlobales = []; // Aquí guardaremos las noticias temporalmente
 
 // Iniciar al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
     cargarNoticias();
+    cargarConfiguracion(); // <-- Agregamos esta línea
 });
 
 // --- FUNCIÓN PARA CARGAR Y DIBUJAR NOTICIAS ---
@@ -66,7 +67,7 @@ async function cargarNoticias() {
                     <div class="p-6 flex flex-col flex-grow">
                         <p class="text-xs text-gray-400 font-semibold mb-2">${fechaBonita}</p>
                         <h4 class="text-xl font-bold text-gray-800 mb-3 leading-tight group-hover:text-blue-600 transition-colors">${noticia.Titulo || 'Sin título'}</h4>
-                        <p class="text-gray-600 text-sm flex-grow line-clamp-4">${noticia.Contenido || ''}</p>
+                        <p class="text-gray-600 text-sm flex-grow line-clamp-4">${noticia.Resumen || noticia.Contenido || ''}</p>
                         
                         <div class="mt-4 pt-4 border-t border-gray-100 text-blue-600 font-bold text-sm flex items-center justify-end">
                             Leer completo <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -125,4 +126,45 @@ function abrirNoticia(index) {
 function cerrarNoticia() {
     document.getElementById('modal-noticia').classList.add('hidden');
     document.body.style.overflow = 'auto'; 
+}
+
+// --- FUNCIÓN PARA CARGAR LA CONFIGURACIÓN (Ej: Formulario) ---
+async function cargarConfiguracion() {
+    try {
+        const respuesta = await fetch(`${URL_API}?action=get_config`);
+        const config = await respuesta.json();
+        
+        // Si encontramos la URL en el Excel, se la ponemos al iframe
+        if (config.UrlGimnasio) {
+            document.getElementById('iframe-gimnasio').src = config.UrlGimnasio;
+        }
+    } catch (error) {
+        console.error("Error cargando configuración:", error);
+    }
+}
+
+// --- FUNCIÓN PARA CARGAR LA CONFIGURACIÓN (Formulario Paramétrico) ---
+async function cargarConfiguracion() {
+    try {
+        const respuesta = await fetch(`${URL_API}?action=get_config`);
+        const config = await respuesta.json();
+        
+        // 1. Si encontramos la URL en el Excel, se la ponemos al iframe
+        if (config.UrlGimnasio) {
+            document.getElementById('iframe-gimnasio').src = config.UrlGimnasio;
+        }
+        
+        // 2. MAGIA: Actualizamos el título de la sección visualmente
+        if (config.TituloFormulario) {
+            const tituloEl = document.getElementById('titulo-seccion-form');
+            if (tituloEl) {
+                tituloEl.innerText = config.TituloFormulario;
+            }
+        } else {
+             // Un texto por defecto por si el admin no ha configurado nada aún
+             document.getElementById('titulo-seccion-form').innerText = "Formulario de Copropiedad";
+        }
+    } catch (error) {
+        console.error("Error cargando configuración:", error);
+    }
 }

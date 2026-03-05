@@ -1,5 +1,5 @@
 // 1. CONFIGURACIÓN GLOBAL
-const URL_API = "https://script.google.com/macros/s/AKfycbwYJGsjmRHYxqBHe7NrC6SitY3kKIgRdxl4JXmOJcX71aajKL9qfvjtdKdRydO7x547/exec"; 
+const URL_API = "https://script.google.com/macros/s/AKfycbwDlXwT4iEHLqSF9hIoz7hokmUn8l2izz9C8C1xgM9HtiRBw1KDLrd1rszbl6koe8bo/exec"; 
 
 let usuarioActual = "";
 let rolActual = "";
@@ -134,11 +134,14 @@ async function login() {
             document.getElementById('role-badge').innerText = rolActual;
 
             if (rolActual === 'usuario') {
-                //document.getElementById('menu-crear').classList.remove('hidden');
                 document.getElementById('form-container').classList.remove('hidden');
+                document.getElementById('menu-admin-noticias')?.classList.add('hidden');
+                document.getElementById('menu-admin-config')?.classList.add('hidden');
             } else {
-                //document.getElementById('menu-crear').classList.add('hidden');
                 document.getElementById('form-container').classList.add('hidden');
+                // Habilitamos el menú de admin
+                document.getElementById('menu-admin-noticias')?.classList.remove('hidden');
+                document.getElementById('menu-admin-config')?.classList.remove('hidden');
             }
 
             await cargarDatosReales();
@@ -561,3 +564,186 @@ function limpiarFormulario() {
     document.getElementById('reg-pass-confirm').value = "";
     if(document.getElementById('captcha')) document.getElementById('captcha').checked = false;
 }
+
+// ==========================================
+//  MÓDULO ADMIN PRO (SHEETS) - NOTICIAS Y CONFIG
+// ==========================================
+
+let noticiasAdminGlobal = [];
+
+window.cerrarModalGeneral = (id) => document.getElementById(id).classList.add('hidden');
+
+// --- NOTICIAS ---
+window.abrirModalNoticias = async () => {
+    document.getElementById('modal-admin-noticias').classList.remove('hidden');
+    volverListaNoticias();
+    await cargarNoticiasAdmin();
+};
+
+window.mostrarFormularioNoticia = () => {
+    document.getElementById('vista-lista-noticias').classList.add('hidden');
+    document.getElementById('vista-form-noticia').classList.remove('hidden');
+    // Limpiar formulario y poner fecha de hoy
+    document.getElementById('noti-titulo').value = "";
+    document.getElementById('noti-resumen').value = "";
+    document.getElementById('noti-contenido').value = "";
+    document.getElementById('noti-imagen').value = "";
+    document.getElementById('noti-fecha').valueAsDate = new Date();
+};
+
+window.volverListaNoticias = () => {
+    document.getElementById('vista-form-noticia').classList.add('hidden');
+    document.getElementById('vista-lista-noticias').classList.remove('hidden');
+};
+
+async function cargarNoticiasAdmin() {
+    mostrarCarga();
+    const tbody = document.getElementById('tabla-admin-noticias');
+    try {
+        const resp = await fetch(`${URL_API}?action=get_news`);
+        const data = await resp.json();
+        
+        // Filtramos las válidas
+        noticiasAdminGlobal = data.filter(n => n.Titulo && n.Titulo.toString().trim() !== "");
+        
+        // Lógica del Límite de 4
+        document.getElementById('contador-noticias').innerText = noticiasAdminGlobal.length;
+        const btnAdd = document.getElementById('btn-nueva-noticia');
+        if (noticiasAdminGlobal.length >= 4) {
+            btnAdd.classList.add('hidden'); // Ocultamos el botón "+" si ya hay 4
+        } else {
+            btnAdd.classList.remove('hidden');
+        }
+
+        if (noticiasAdminGlobal.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No hay noticias publicadas.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = noticiasAdminGlobal.map((noti, index) => {
+            let colorClase = 'bg-blue-100 text-blue-800';
+            if(noti.Categoria?.includes('Urgente')) colorClase = 'bg-red-100 text-red-800';
+            if(noti.Categoria?.includes('Mantenimiento')) colorClase = 'bg-orange-100 text-orange-800';
+            
+            const f = noti.Fecha ? new Date(noti.Fecha).toLocaleDateString() : '--';
+
+            return `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 text-gray-500">${f}</td>
+                    <td class="p-3 font-bold text-gray-800">${noti.Titulo}</td>
+                    <td class="p-3"><span class="px-2 py-1 text-[10px] font-bold uppercase rounded ${colorClase}">${noti.Categoria || 'Info'}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="borrarNoticiaPro('${noti.ID}')" class="text-red-500 hover:text-red-700 p-2" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500">Error al cargar.</td></tr>';
+    } finally {
+        ocultarCarga();
+    }
+}
+
+// Convertidor de Imagen para enviarla a Google Sheets/Drive
+function leerImagenComoBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve({ nombre: file.name, tipo: file.type, base64: reader.result.split(',')[1] });
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
+
+window.guardarNoticiaPro = async () => {
+    const titulo = document.getElementById('noti-titulo').value.trim();
+    const resumen = document.getElementById('noti-resumen').value.trim();
+    const categoria = document.getElementById('noti-categoria').value;
+    const fecha = document.getElementById('noti-fecha').value;
+    const contenido = document.getElementById('noti-contenido').value.trim();
+    const fileInput = document.getElementById('noti-imagen');
+
+    if (!titulo || !resumen || !contenido) return mostrarMensaje("Atención", "Título, resumen y contenido son obligatorios.", "error");
+
+    mostrarCarga();
+    try {
+        let archivoData = null;
+        if (fileInput.files.length > 0) {
+            archivoData = await leerImagenComoBase64(fileInput.files[0]);
+        }
+
+        const payload = {
+            action: "save_news",
+            titulo: titulo,
+            resumen: resumen,
+            categoria: categoria,
+            fecha: fecha,
+            contenido: contenido,
+            archivo: archivoData // Se manda en base64 para que el Apps Script lo guarde
+        };
+
+        await fetch(URL_API, { method: 'POST', body: JSON.stringify(payload) });
+        
+        mostrarMensaje("¡Publicada!", "Noticia agregada con éxito.", "success");
+        volverListaNoticias();
+        cargarNoticiasAdmin(); // Refrescar la tabla
+    } catch (e) {
+        mostrarMensaje("Error", "No se pudo publicar.", "error");
+    } finally {
+        ocultarCarga();
+    }
+};
+
+window.borrarNoticiaPro = async (idNoticia) => {
+    if(!confirm("¿Seguro que deseas eliminar esta noticia definitivamente?")) return;
+    
+    mostrarCarga();
+    try {
+        await fetch(URL_API, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: "delete_news", id: idNoticia }) 
+        });
+        mostrarMensaje("Borrada", "La noticia y su imagen fueron eliminadas.", "success");
+        cargarNoticiasAdmin();
+    } catch (e) {
+        mostrarMensaje("Error", "Fallo al borrar.", "error");
+    } finally {
+        ocultarCarga();
+    }
+};
+
+// --- CONFIGURACIÓN CARTELERA ---
+window.abrirModalConfig = async () => {
+    document.getElementById('modal-admin-config').classList.remove('hidden');
+    mostrarCarga();
+    try {
+        const resp = await fetch(`${URL_API}?action=get_config`);
+        const data = await resp.json();
+        if(data) {
+            document.getElementById('conf-titulo-form').value = data.TituloFormulario || "";
+            document.getElementById('conf-url-form').value = data.UrlGimnasio || "";
+        }
+    } catch(e) { console.log(e); }
+    ocultarCarga();
+};
+
+window.guardarConfiguracionPro = async () => {
+    const titulo = document.getElementById('conf-titulo-form').value.trim();
+    const url = document.getElementById('conf-url-form').value.trim();
+
+    if (!titulo || !url) return mostrarMensaje("Atención", "Debes ingresar título y URL.", "error");
+
+    mostrarCarga();
+    try {
+        await fetch(URL_API, {
+            method: 'POST',
+            body: JSON.stringify({ action: "save_config", tituloForm: titulo, urlForm: url })
+        });
+        mostrarMensaje("¡Guardado!", "La configuración de la cartelera ha sido actualizada.", "success");
+        cerrarModalGeneral('modal-admin-config');
+    } catch (e) {
+        mostrarMensaje("Error", "No se pudo guardar la configuración.", "error");
+    } finally {
+        ocultarCarga();
+    }
+};
