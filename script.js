@@ -1,5 +1,5 @@
 // 1. CONFIGURACIÓN GLOBAL
-const URL_API = "https://script.google.com/macros/s/AKfycbwDlXwT4iEHLqSF9hIoz7hokmUn8l2izz9C8C1xgM9HtiRBw1KDLrd1rszbl6koe8bo/exec"; 
+const URL_API = "https://script.google.com/macros/s/AKfycbyzxwC0l7oJQ5JMBr8ePbhaivNVsQPsSDgtqrx3RDXCTVHMX5yk4w17huZmSRej-CEZ/exec";
 
 let usuarioActual = "";
 let rolActual = "";
@@ -10,6 +10,16 @@ let datosGlobales = []; // <--- ¡AGREGA ESTA LÍNEA AQUÍ!
 function mostrarCarga() {
     const loader = document.getElementById('loading-overlay');
     if (loader) loader.classList.remove('hidden');
+}
+
+async function cargarDirectorio() {
+    try {
+        const resp = await fetch(`${URL_API}?action=get_config`);
+        const data = await resp.json();
+        document.getElementById('dir-admin').innerText = data.TelAdmin || "No registrado";
+        document.getElementById('dir-porteria').innerText = data.TelPorteria || "No registrado";
+        document.getElementById('dir-emergencia').innerText = data.TelEmergencia || "No registrado";
+    } catch(e) { console.log("Error cargando directorio"); }
 }
 
 function ocultarCarga() {
@@ -145,6 +155,7 @@ async function login() {
             }
 
             await cargarDatosReales();
+            await cargarDirectorio(); // NUEVO: Carga los números al iniciar sesión
         } else {
             mostrarMensaje("Atención", "Acceso denegado. Verifica correo, clave o rol.", "error");
         }
@@ -580,15 +591,45 @@ window.abrirModalNoticias = async () => {
     await cargarNoticiasAdmin();
 };
 
+// Cuando le damos al botón "+ Añadir Noticia" (Limpia todo)
 window.mostrarFormularioNoticia = () => {
     document.getElementById('vista-lista-noticias').classList.add('hidden');
     document.getElementById('vista-form-noticia').classList.remove('hidden');
-    // Limpiar formulario y poner fecha de hoy
+    
+    document.getElementById('noti-id').value = ""; // Limpiamos el ID fantasma
     document.getElementById('noti-titulo').value = "";
     document.getElementById('noti-resumen').value = "";
     document.getElementById('noti-contenido').value = "";
     document.getElementById('noti-imagen').value = "";
     document.getElementById('noti-fecha').valueAsDate = new Date();
+    
+    document.getElementById('btn-guardar-noti').innerText = "Publicar Noticia";
+};
+
+// NUEVA: Cuando le damos al lapicito (Llena el formulario con los datos)
+window.editarNoticiaPro = (id) => {
+    const noti = noticiasAdminGlobal.find(n => n.ID === id);
+    if(!noti) return;
+
+    document.getElementById('vista-lista-noticias').classList.add('hidden');
+    document.getElementById('vista-form-noticia').classList.remove('hidden');
+
+    document.getElementById('noti-id').value = noti.ID; // Guardamos el ID fantasma
+    document.getElementById('noti-titulo').value = noti.Titulo || '';
+    document.getElementById('noti-categoria').value = noti.Categoria || 'Informativo';
+    document.getElementById('noti-resumen').value = noti.Resumen || '';
+    document.getElementById('noti-imagen').value = noti.Imagen || '';
+    document.getElementById('noti-contenido').value = noti.Contenido || '';
+
+    // Arreglar la fecha para que el input la entienda
+    if(noti.Fecha) {
+        const d = new Date(noti.Fecha);
+        const mes = String(d.getMonth() + 1).padStart(2, '0');
+        const dia = String(d.getDate()).padStart(2, '0');
+        document.getElementById('noti-fecha').value = `${d.getFullYear()}-${mes}-${dia}`;
+    }
+
+    document.getElementById('btn-guardar-noti').innerText = "Actualizar Noticia";
 };
 
 window.volverListaNoticias = () => {
@@ -603,14 +644,12 @@ async function cargarNoticiasAdmin() {
         const resp = await fetch(`${URL_API}?action=get_news`);
         const data = await resp.json();
         
-        // Filtramos las válidas
         noticiasAdminGlobal = data.filter(n => n.Titulo && n.Titulo.toString().trim() !== "");
         
-        // Lógica del Límite de 4
         document.getElementById('contador-noticias').innerText = noticiasAdminGlobal.length;
         const btnAdd = document.getElementById('btn-nueva-noticia');
         if (noticiasAdminGlobal.length >= 4) {
-            btnAdd.classList.add('hidden'); // Ocultamos el botón "+" si ya hay 4
+            btnAdd.classList.add('hidden'); 
         } else {
             btnAdd.classList.remove('hidden');
         }
@@ -633,6 +672,7 @@ async function cargarNoticiasAdmin() {
                     <td class="p-3 font-bold text-gray-800">${noti.Titulo}</td>
                     <td class="p-3"><span class="px-2 py-1 text-[10px] font-bold uppercase rounded ${colorClase}">${noti.Categoria || 'Info'}</span></td>
                     <td class="p-3 text-center">
+                        <button onclick="editarNoticiaPro('${noti.ID}')" class="text-blue-500 hover:text-blue-700 p-2" title="Modificar"><i class="fas fa-edit"></i></button>
                         <button onclick="borrarNoticiaPro('${noti.ID}')" class="text-red-500 hover:text-red-700 p-2" title="Eliminar"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
@@ -656,63 +696,87 @@ function leerImagenComoBase64(file) {
 }
 
 window.guardarNoticiaPro = async () => {
+    const idNoticia = document.getElementById('noti-id').value; // Leemos el ID oculto
     const titulo = document.getElementById('noti-titulo').value.trim();
     const resumen = document.getElementById('noti-resumen').value.trim();
     const categoria = document.getElementById('noti-categoria').value;
     const fecha = document.getElementById('noti-fecha').value;
     const contenido = document.getElementById('noti-contenido').value.trim();
-    const fileInput = document.getElementById('noti-imagen');
+    const imagenUrl = document.getElementById('noti-imagen').value.trim(); 
 
-    if (!titulo || !resumen || !contenido) return mostrarMensaje("Atención", "Título, resumen y contenido son obligatorios.", "error");
+    if (!titulo || !resumen || !contenido || !fecha) {
+        return Swal.fire("Atención", "Título, resumen, fecha y contenido son obligatorios.", "warning");
+    }
 
     mostrarCarga();
     try {
-        let archivoData = null;
-        if (fileInput.files.length > 0) {
-            archivoData = await leerImagenComoBase64(fileInput.files[0]);
-        }
-
         const payload = {
-            action: "save_news",
+            action: idNoticia ? "edit_news" : "save_news", // Si hay ID, edita. Si no, crea.
+            id: idNoticia,
             titulo: titulo,
             resumen: resumen,
             categoria: categoria,
             fecha: fecha,
             contenido: contenido,
-            archivo: archivoData // Se manda en base64 para que el Apps Script lo guarde
+            imagenUrl: imagenUrl 
         };
 
-        await fetch(URL_API, { method: 'POST', body: JSON.stringify(payload) });
+        const response = await fetch(URL_API, { method: 'POST', body: JSON.stringify(payload) });
+        const textoServidor = await response.text(); 
+
+        if (textoServidor.includes('"error"')) {
+            let msg = "El servidor rechazó la noticia.";
+            try { msg = JSON.parse(textoServidor).message || msg; } catch(e) {}
+            return Swal.fire("Error", msg, "error");
+        }
+
+        const mensajeExito = idNoticia ? "La noticia se actualizó correctamente." : "La noticia se guardó correctamente.";
+        Swal.fire("¡Listo!", mensajeExito, "success");
         
-        mostrarMensaje("¡Publicada!", "Noticia agregada con éxito.", "success");
         volverListaNoticias();
-        cargarNoticiasAdmin(); // Refrescar la tabla
+        setTimeout(async () => { await cargarNoticiasAdmin(); }, 1500);
+
     } catch (e) {
-        mostrarMensaje("Error", "No se pudo publicar.", "error");
+        Swal.fire("Error de Conexión", "No se pudo comunicar con el servidor.", "error");
     } finally {
         ocultarCarga();
     }
 };
 
 window.borrarNoticiaPro = async (idNoticia) => {
-    if(!confirm("¿Seguro que deseas eliminar esta noticia definitivamente?")) return;
-    
+    // ¡Adiós recuadro feo del navegador! Usamos SweetAlert2
+    const result = await Swal.fire({
+        title: '¿Eliminar Noticia?',
+        text: "Esta acción la borrará de la cartelera y de Google Drive.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return; // Si el administrador cancela, no hacemos nada
+
     mostrarCarga();
     try {
         await fetch(URL_API, { 
             method: 'POST', 
             body: JSON.stringify({ action: "delete_news", id: idNoticia }) 
         });
-        mostrarMensaje("Borrada", "La noticia y su imagen fueron eliminadas.", "success");
-        cargarNoticiasAdmin();
+        
+        // Mensaje de éxito hermoso
+        Swal.fire('¡Borrada!', 'La noticia fue eliminada correctamente.', 'success');
+        await cargarNoticiasAdmin(); // Recargamos la tabla
     } catch (e) {
-        mostrarMensaje("Error", "Fallo al borrar.", "error");
+        Swal.fire('Error', 'Fallo la conexión al intentar borrar.', 'error');
     } finally {
         ocultarCarga();
     }
 };
 
 // --- CONFIGURACIÓN CARTELERA ---
+// --- CONFIGURACIÓN CARTELERA Y DIRECTORIO ---
 window.abrirModalConfig = async () => {
     document.getElementById('modal-admin-config').classList.remove('hidden');
     mostrarCarga();
@@ -722,6 +786,9 @@ window.abrirModalConfig = async () => {
         if(data) {
             document.getElementById('conf-titulo-form').value = data.TituloFormulario || "";
             document.getElementById('conf-url-form').value = data.UrlGimnasio || "";
+            document.getElementById('conf-tel-admin').value = data.TelAdmin || "";
+            document.getElementById('conf-tel-porteria').value = data.TelPorteria || "";
+            document.getElementById('conf-tel-emergencia').value = data.TelEmergencia || "";
         }
     } catch(e) { console.log(e); }
     ocultarCarga();
@@ -730,20 +797,34 @@ window.abrirModalConfig = async () => {
 window.guardarConfiguracionPro = async () => {
     const titulo = document.getElementById('conf-titulo-form').value.trim();
     const url = document.getElementById('conf-url-form').value.trim();
-
-    if (!titulo || !url) return mostrarMensaje("Atención", "Debes ingresar título y URL.", "error");
+    const tAdmin = document.getElementById('conf-tel-admin').value.trim();
+    const tPort = document.getElementById('conf-tel-porteria').value.trim();
+    const tEmer = document.getElementById('conf-tel-emergencia').value.trim();
 
     mostrarCarga();
     try {
         await fetch(URL_API, {
             method: 'POST',
-            body: JSON.stringify({ action: "save_config", tituloForm: titulo, urlForm: url })
+            body: JSON.stringify({ 
+                action: "save_config", 
+                tituloForm: titulo, 
+                urlForm: url,
+                telAdmin: tAdmin,
+                telPorteria: tPort,
+                telEmergencia: tEmer
+            })
         });
-        mostrarMensaje("¡Guardado!", "La configuración de la cartelera ha sido actualizada.", "success");
+        Swal.fire("¡Guardado!", "Configuración y directorio actualizados.", "success");
         cerrarModalGeneral('modal-admin-config');
+        cargarDirectorio(); // Refrescamos los números en la pantalla principal
     } catch (e) {
-        mostrarMensaje("Error", "No se pudo guardar la configuración.", "error");
+        Swal.fire("Error", "No se pudo guardar la configuración.", "error");
     } finally {
         ocultarCarga();
     }
+};
+
+// --- ABRIR MODAL DIRECTORIO TELEFÓNICO ---
+window.abrirModalDirectorio = () => {
+    document.getElementById('modal-directorio').classList.remove('hidden');
 };

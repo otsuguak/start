@@ -1,0 +1,305 @@
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var action = e.parameter.action;
+
+  // --- 1. LÓGICA DE LOGIN (SEGURIDAD) ---
+  if (action === "login") {
+    var sheetUsers = ss.getSheetByName("Usuarios");
+    // Verificamos que la hoja exista para evitar errores 500
+    if (!sheetUsers) return ContentService.createTextOutput(JSON.stringify({ "auth": false, "error": "Hoja Usuarios no encontrada" })).setMimeType(ContentService.MimeType.JSON);
+
+    var userData = sheetUsers.getDataRange().getValues();
+    userData.shift(); // Quitar cabeceras
+    
+    // Normalizamos los datos que vienen de la web
+    var emailBusqueda = e.parameter.email ? e.parameter.email.toLowerCase().trim() : "";
+    var passBusqueda = e.parameter.pass ? e.parameter.pass.trim() : "";
+    var rolBusqueda = e.parameter.rol ? e.parameter.rol.toLowerCase().trim() : "";
+
+    // Buscamos coincidencia exacta en el Sheet
+// Buscamos coincidencia exacta en el Sheet y traemos la fila completa
+    var usuarioEncontrado = userData.find(function(row) {
+      var emailEnSheet = row[1] ? row[1].toString().toLowerCase().trim() : "";
+      var rolEnSheet = row[2] ? row[2].toString().toLowerCase().trim() : "";
+      var passEnSheet = row[4] ? row[4].toString().trim() : "";
+      
+      return emailEnSheet === emailBusqueda && 
+             passEnSheet === passBusqueda && 
+             rolEnSheet === rolBusqueda;
+    });
+
+    // Si encontró al usuario, devolvemos auth en true y además enviamos el nombre (columna 0)
+    if (usuarioEncontrado) {
+      var nombreReal = usuarioEncontrado[0] ? usuarioEncontrado[0].toString() : emailBusqueda;
+      return ContentService.createTextOutput(JSON.stringify({ "auth": true, "nombre": nombreReal }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else {
+      // Si no lo encuentra, solo devolvemos auth en false
+      return ContentService.createTextOutput(JSON.stringify({ "auth": false }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    }
+    // --- LÓGICA DEL PORTAL DE NOTICIAS ---
+    if (action === "get_news") {
+      var sheetNoticias = ss.getSheetByName("Noticias");
+      if (!sheetNoticias) return ContentService.createTextOutput("[]").setMimeType(ContentService.MimeType.JSON);
+    
+      var data = sheetNoticias.getDataRange().getValues();
+      var headers = data.shift(); // Quitamos cabeceras
+    
+      var noticias = data.map(function(row) {
+        var obj = {};
+        headers.forEach(function(key, i) { 
+          obj[key.toString().trim()] = row[i]; 
+        });
+        return obj;
+      }).reverse(); // El reverse() pone las noticias más nuevas de primeras
+    
+      return ContentService.createTextOutput(JSON.stringify(noticias))
+        .setMimeType(ContentService.MimeType.JSON);
+      }
+
+    
+    // --- LÓGICA DE CONFIGURACIONES GENERALES ---
+  if (action === "get_config") {
+    var sheetConfig = ss.getSheetByName("Configuracion");
+    if (!sheetConfig) return ContentService.createTextOutput("{}").setMimeType(ContentService.MimeType.JSON);
+    
+    var data = sheetConfig.getDataRange().getValues();
+    var config = {};
+    
+    // Leemos desde la fila 2 para saltar los títulos
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0]) {
+        config[data[i][0].toString().trim()] = data[i][1].toString().trim();
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify(config))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+
+  // --- 2. LÓGICA DE CARGA DE TABLA PQRs ---
+  var sheetPQRs = ss.getSheetByName("PQRs") || ss.getSheetByName("PQR"); 
+  if (!sheetPQRs) return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+
+  var pqrData = sheetPQRs.getDataRange().getValues();
+  var header = pqrData.shift(); 
+  
+  var emailUser = e.parameter.email ? e.parameter.email.toLowerCase().trim() : "";
+  var rolUser = e.parameter.rol ? e.parameter.rol.toLowerCase().trim() : "";
+
+  var results = pqrData.map(function(row) {
+    var obj = {};
+    header.forEach(function(key, i) { 
+      var cleanKey = key.toString().trim();
+      obj[cleanKey] = row[i]; 
+    });
+    return obj;
+  }).filter(function(item) {
+    if (rolUser === "usuario") {
+      var emailKey = Object.keys(item).find(k => k.toLowerCase() === "email");
+      var emailEnFila = (emailKey && item[emailKey]) ? item[emailKey].toString().toLowerCase().trim() : "";
+      return emailEnFila === emailUser;
+    }
+    return true; // Agentes ven todo
+  });
+
+  return ContentService.createTextOutput(JSON.stringify(results))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+//*******************************************************************/
+//                             dopost  
+//*******************************************************************/
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const body = JSON.parse(e.postData.contents);
+    const action = body.action;
+
+    // =========================================
+    // 1. LÓGICAS ORIGINALES (Registro y PQRs)
+    // =========================================
+    
+    // --- ACCIÓN: REGISTRO DE USUARIO ---
+    if (action === "register") {
+      const sheet = ss.getSheetByName("Usuarios");
+      if (!sheet) throw new Error("La hoja 'Usuarios' no existe en el Excel.");
+      
+      const data = sheet.getDataRange().getValues();
+      const rolSolicitado = String(body.rol || "").toLowerCase().trim();
+
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][1]).toLowerCase() === String(body.email).toLowerCase()) {
+           return ContentService.createTextOutput(JSON.stringify({result: "error", message: "El correo ya está registrado."})).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+
+      if (rolSolicitado === "agente") {
+          for (let i = 1; i < data.length; i++) {
+            let rolEnFila = String(data[i][2] || "").toLowerCase().trim();
+            if (rolEnFila === "agente") {
+               return ContentService.createTextOutput(JSON.stringify({
+                   result: "error", 
+                   message: "Acceso denegado: Ya existe un Agente principal registrado."
+               })).setMimeType(ContentService.MimeType.JSON);
+            }
+          }
+      }
+
+      sheet.appendRow([body.nombre, body.email, body.rol, body.inmueble, body.password, new Date()]);
+      return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // --- ACCIÓN: ACTUALIZAR PQR ---
+    if (action === "update_pqr") {
+       const sheetPQR = ss.getSheetByName("PQR") || ss.getSheetByName("PQRs"); 
+       const data = sheetPQR.getDataRange().getValues();
+       
+       for (let i = 1; i < data.length; i++) {
+         if (data[i][0].toString() === body.id.toString()) {
+           let respuestaPrevia = data[i][6] || ""; 
+           let nuevaRespuesta = respuestaPrevia + "\n[" + new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString() + "]: " + body.respuesta;
+           
+           sheetPQR.getRange(i + 1, 7).setValue(nuevaRespuesta);
+           if (body.estado) sheetPQR.getRange(i + 1, 6).setValue(body.estado);
+           break;
+         }
+       }
+       return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // --- ACCIÓN: RESTABLECER CONTRASEÑA ---
+    if (action === "reset_pass") {
+       const sheetUsr = ss.getSheetByName("Usuarios");
+       const data = sheetUsr.getDataRange().getValues();
+       let encontrado = false;
+
+       for (let i = 1; i < data.length; i++) {
+         if (String(data[i][1]).toLowerCase() === String(body.email).toLowerCase() && 
+             String(data[i][3]).toLowerCase() === String(body.inmueble).toLowerCase()) {
+            sheetUsr.getRange(i + 1, 5).setValue(body.newPass);
+            encontrado = true;
+            break;
+         }
+       }
+       
+       if(encontrado) return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+       else return ContentService.createTextOutput(JSON.stringify({result: "error", message: "Datos no coinciden"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // --- ACCIÓN: CREAR PQR ---
+    if (!action && body.tipo && body.descripcion) {
+       const sheetPQR = ss.getSheetByName("PQR") || ss.getSheetByName("PQRs");
+       const id = "PQR-" + Math.floor(Math.random() * 100000);
+       sheetPQR.appendRow([id, new Date(), body.email, body.tipo, body.descripcion, "Abierto", ""]);
+       return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+
+    // =========================================
+    // 2. NUEVO MÓDULO: CARTELERA PRO
+    // =========================================
+
+    // --- ACCIÓN: GUARDAR NUEVA NOTICIA ---
+    if (action === "save_news") {
+      let sheetNoti = ss.getSheetByName("Noticias");
+      if (!sheetNoti) {
+        sheetNoti = ss.insertSheet("Noticias");
+        sheetNoti.appendRow(["ID", "Fecha", "Titulo", "Categoria", "Resumen", "Contenido", "Imagen"]);
+      }
+
+      if (sheetNoti.getLastRow() >= 5) {
+        return ContentService.createTextOutput(JSON.stringify({result: "error", message: "Límite de 4 noticias alcanzado."})).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      const newId = "NOTI-" + Math.floor(Math.random() * 100000);
+      
+      // Guardamos la fila directamente con la URL que mandó el administrador
+      sheetNoti.appendRow([newId, body.fecha, body.titulo, body.categoria, body.resumen, body.contenido, body.imagenUrl || ""]);
+      
+      return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // --- ACCIÓN: EDITAR NOTICIA EXISTENTE ---
+    if (action === "edit_news") {
+      let sheetNoti = ss.getSheetByName("Noticias");
+      if (sheetNoti) {
+        let data = sheetNoti.getDataRange().getValues();
+        for (let i = 1; i < data.length; i++) {
+          if (data[i][0] == body.id) {
+            // Actualizamos solo esa fila (i + 1 porque en Excel la Fila 1 son los títulos)
+            sheetNoti.getRange(i + 1, 2).setValue(body.fecha);
+            sheetNoti.getRange(i + 1, 3).setValue(body.titulo);
+            sheetNoti.getRange(i + 1, 4).setValue(body.categoria);
+            sheetNoti.getRange(i + 1, 5).setValue(body.resumen);
+            sheetNoti.getRange(i + 1, 6).setValue(body.contenido);
+            sheetNoti.getRange(i + 1, 7).setValue(body.imagenUrl || "");
+            break;
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // --- ACCIÓN: ELIMINAR NOTICIA ---
+    if (action === "delete_news") {
+      let sheetNoti = ss.getSheetByName("Noticias");
+      if (sheetNoti) {
+        let data = sheetNoti.getDataRange().getValues();
+        for (let i = 1; i < data.length; i++) {
+          if (data[i][0] == body.id) {
+            sheetNoti.deleteRow(i + 1); // Solo borramos la fila del Excel y listo
+            break;
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // --- ACCIÓN: GUARDAR CONFIGURACIÓN DE FORMULARIO ---
+    if (action === "save_config") {
+      let sheetConf = ss.getSheetByName("Configuracion");
+      if (!sheetConf) {
+        sheetConf = ss.insertSheet("Configuracion");
+        sheetConf.appendRow(["Clave", "Valor"]);
+      }
+
+      // Función interna para actualizar si existe, o crear si no existe
+      function updateOrInsert(clave, valor) {
+        let data = sheetConf.getDataRange().getValues();
+        let found = false;
+        for (let i = 1; i < data.length; i++) {
+          if (data[i][0] == clave) {
+            sheetConf.getRange(i + 1, 2).setValue(valor);
+            found = true;
+            break;
+          }
+        }
+        if (!found) sheetConf.appendRow([clave, valor]);
+      }
+
+      updateOrInsert("TituloFormulario", body.tituloForm);
+      updateOrInsert("UrlGimnasio", body.urlForm);
+      updateOrInsert("TelAdmin", body.telAdmin);
+      updateOrInsert("TelPorteria", body.telPorteria);
+      updateOrInsert("TelEmergencia", body.telEmergencia);
+
+      return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+  } catch (e) {
+    return ContentService.createTextOutput(JSON.stringify({result: "error", error: e.toString()})).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function pedirPermisosCompletos() {
+  // Obligamos a Google a pedir el permiso nivel Dios (Crear y Borrar)
+  var carpetaFalsa = DriveApp.createFolder("Carpeta_Temporal_Borrame");
+  carpetaFalsa.setTrashed(true); // La tiramos a la basura de una vez para no dejar desorden
+}

@@ -1,5 +1,5 @@
 // ================= CONFIGURACIÓN =================
-const URL_API = "https://script.google.com/macros/s/AKfycbwDlXwT4iEHLqSF9hIoz7hokmUn8l2izz9C8C1xgM9HtiRBw1KDLrd1rszbl6koe8bo/exec";
+const URL_API = "https://script.google.com/macros/s/AKfycbyzxwC0l7oJQ5JMBr8ePbhaivNVsQPsSDgtqrx3RDXCTVHMX5yk4w17huZmSRej-CEZ/exec";
 
 let noticiasGlobales = []; // Aquí guardaremos las noticias temporalmente
 

@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM PQR - Sistema de Gestión</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body class="bg-gray-100 font-sans">
 
     <div id="login-section" class="flex items-center justify-center h-screen">
@@ -33,82 +36,82 @@
     <div id="register-section" class="hidden flex items-center justify-center h-screen bg-gray-200">
         <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border-t-4 border-green-600">
             <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Registro de Usuario</h2>
-            
             <div class="space-y-3">
                 <input type="text" id="reg-nombre" placeholder="Nombre completo" class="w-full p-2 border rounded">
                 <input type="email" id="reg-email" placeholder="Correo electrónico" class="w-full p-2 border rounded">
-                
                 <div class="grid grid-cols-2 gap-2">
                     <select id="reg-rol" class="p-2 border rounded bg-gray-50 text-gray-600">
                         <option value="usuario">Usuario</option>
-                        <option value="agente">adminitrador</option>
+                        <option value="agente">Administrador</option>
                     </select>
-                    <input type="text" id="reg-inmueble" placeholder="Inmueble (torre/Apto/Casa)" class="p-2 border rounded">
+                    <input type="text" id="reg-inmueble" placeholder="Inmueble (Torre/Apto/Casa)" class="p-2 border rounded">
                 </div>
-
                 <input type="password" id="reg-pass" placeholder="Contraseña" class="w-full p-2 border rounded">
                 <input type="password" id="reg-pass-confirm" placeholder="Confirmar contraseña" class="w-full p-2 border rounded">
-
                 <div class="flex items-center p-3 bg-gray-50 border rounded mt-2">
                     <input type="checkbox" id="captcha" class="w-4 h-4 text-green-600 mr-2">
                     <label for="captcha" class="text-sm font-medium text-gray-700 cursor-pointer">No soy un robot</label>
                 </div>
-
                 <button onclick="registrarUsuario()" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 font-bold mt-4">Registrarme Ahora</button>
                 <button onclick="mostrarLogin()" class="w-full text-gray-500 text-sm mt-2 hover:underline">Volver al inicio de sesión</button>
             </div>
         </div>
     </div>
 
-
-
     <div id="recovery-section" class="hidden flex items-center justify-center h-screen bg-gray-200">
         <div class="bg-white p-8 rounded-lg shadow-lg w-96 border-t-4 border-yellow-500">
             <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Recuperar Contraseña</h2>
             <p class="text-sm text-gray-600 mb-4 text-center">Ingresa tu correo y tu número de inmueble para validar tu identidad.</p>
-            
             <input type="email" id="rec-email" placeholder="Correo registrado" class="w-full p-2 border rounded mb-3">
             <input type="text" id="rec-inmueble" placeholder="Inmueble (Dato de seguridad)" class="w-full p-2 border rounded mb-3">
-            
             <hr class="my-3">
-            
             <input type="password" id="rec-pass" placeholder="Nueva contraseña" class="w-full p-2 border rounded mb-3">
             <button onclick="recuperarContrasena()" class="w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 font-bold transition">Cambiar Contraseña</button>
-            
             <button onclick="ocultarRecuperacion()" class="w-full text-gray-500 text-sm mt-4 hover:underline">Cancelar y volver</button>
         </div>
     </div>
 
     <div id="dashboard" class="hidden flex h-screen">
+        
         <nav class="w-64 bg-slate-800 text-white p-6">
             <h1 class="text-xl font-bold mb-8 text-blue-400 text-center">CRM PQR</h1>
             <ul class="space-y-4">
-                    <li class="cursor-pointer hover:text-blue-400 font-bold border-b border-slate-700 pb-2" onclick="mostrarDashboard()">Panel Principal</li>
-                    <li id="menu-admin-noticias" class="hidden cursor-pointer hover:text-green-400 font-bold border-b border-slate-700 pb-2 transition" onclick="abrirModalNoticias()">
+                <li class="cursor-pointer hover:text-blue-400 font-bold border-b border-slate-700 pb-2" onclick="mostrarDashboard()">
+                    <i class="fas fa-home mr-2"></i>Panel Principal
+                </li>
+                
+                <li class="cursor-pointer hover:text-blue-400 font-bold border-b border-slate-700 pb-2 transition" onclick="abrirModalDirectorio()">
+                    <i class="fas fa-address-book mr-2"></i>Directorio
+                </li>
+                
+                <li id="menu-admin-noticias" class="hidden cursor-pointer hover:text-green-400 font-bold border-b border-slate-700 pb-2 transition" onclick="abrirModalNoticias()">
                     <i class="fas fa-newspaper mr-2"></i>Gestión de Noticias
                 </li>
                 <li id="menu-admin-config" class="hidden cursor-pointer hover:text-yellow-400 font-bold border-b border-slate-700 pb-2 transition" onclick="abrirModalConfig()">
                     <i class="fas fa-cogs mr-2"></i>Configurar Cartelera
                 </li>
-                
-                <li class="cursor-pointer hover:text-red-400 pt-10 text-red-300 transition" onclick="location.reload()">Cerrar Sesión</li>
+                <li class="cursor-pointer hover:text-red-400 pt-10 text-red-300 transition" onclick="location.reload()">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
+                </li>
             </ul>
         </nav>
 
         <main class="flex-1 p-8 overflow-y-auto">
-            <header class="flex justify-between items-center mb-8 border-b pb-4">
+            
+           <header class="flex justify-between items-center mb-8 border-b pb-4">
                 <h2 id="welcome-text" class="text-2xl font-semibold text-gray-800">Bienvenido</h2>
-                <span id="role-badge" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold capitalize">Rol</span>
+                <div class="flex items-center space-x-4">
+                    <span id="role-badge" class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold capitalize shadow-sm">Rol</span>
+                </div>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between">
                     <h3 class="text-lg font-bold mb-2 text-gray-700 border-b pb-2">Resumen de Gestión</h3>
-    
                     <div class="relative h-64 w-full flex justify-center items-center">
-                <canvas id="myChart"></canvas>
+                        <canvas id="myChart"></canvas>
+                    </div>
                 </div>
-            </div>
 
                 <div id="form-container" class="bg-white p-6 rounded-lg shadow-sm hidden border border-gray-200">
                     <h3 class="text-lg font-bold mb-4 text-green-600 border-b pb-2">Crear Nueva PQR</h3>
@@ -140,80 +143,67 @@
                         </tbody>
                 </table>
             </div>
+
         </main>
     </div>
 
-    
-<div id="modal-detalle" class="hidden fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-    <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-        
-        <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
-            <h3 class="font-bold text-lg">Detalle de la Solicitud</h3>
-            <button onclick="cerrarModal()" class="hover:text-gray-200 text-3xl leading-none">&times;</button>
-        </div>
-        
-        <div class="p-6 space-y-4 overflow-y-auto">
-            
-            <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded border">
-                <div><p class="text-gray-500 text-xs uppercase font-bold">ID del caso:</p><p id="det-id" class="font-bold text-blue-700"></p></div>
-                <div><p class="text-gray-500 text-xs uppercase font-bold">Estado:</p><p id="det-estado" class="font-bold"></p></div>
-                <div class="col-span-2 border-t pt-2"><p class="text-gray-500 text-xs uppercase font-bold">Usuario:</p><p id="det-email" class="font-medium"></p></div>
-                <div class="col-span-2 border-t pt-2"><p class="text-gray-500 text-xs uppercase font-bold">Descripción original:</p><p id="det-desc" class="italic text-gray-700 mt-1"></p></div>
+    <div id="modal-detalle" class="hidden fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg">Detalle de la Solicitud</h3>
+                <button onclick="cerrarModal()" class="hover:text-gray-200 text-3xl leading-none">&times;</button>
             </div>
-
-            <div id="vista-respuesta-usuario" class="hidden pt-2">
-                <div class="bg-green-50 p-3 rounded border border-green-200 shadow-sm">
-                    <p class="text-xs font-bold text-green-700 mb-2 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        ÚLTIMA RESPUESTA GUARDADA:
-                    </p>
-                    <p id="det-respuesta-texto" class="text-sm text-gray-800 whitespace-pre-wrap"></p>
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded border">
+                    <div><p class="text-gray-500 text-xs uppercase font-bold">ID del caso:</p><p id="det-id" class="font-bold text-blue-700"></p></div>
+                    <div><p class="text-gray-500 text-xs uppercase font-bold">Estado:</p><p id="det-estado" class="font-bold"></p></div>
+                    <div class="col-span-2 border-t pt-2"><p class="text-gray-500 text-xs uppercase font-bold">Usuario:</p><p id="det-email" class="font-medium"></p></div>
+                    <div class="col-span-2 border-t pt-2"><p class="text-gray-500 text-xs uppercase font-bold">Descripción original:</p><p id="det-desc" class="italic text-gray-700 mt-1"></p></div>
+                </div>
+                <div id="vista-respuesta-usuario" class="hidden pt-2">
+                    <div class="bg-green-50 p-3 rounded border border-green-200 shadow-sm">
+                        <p class="text-xs font-bold text-green-700 mb-2 flex items-center">
+                            <i class="fas fa-check-circle mr-1"></i> ÚLTIMA RESPUESTA GUARDADA:
+                        </p>
+                        <p id="det-respuesta-texto" class="text-sm text-gray-800 whitespace-pre-wrap"></p>
+                    </div>
+                </div>
+                <div id="seccion-respuesta" class="border-t pt-4">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">Agregar Nueva Respuesta / Actualización:</label>
+                    <div class="mb-3 bg-blue-50 p-3 rounded border border-blue-100">
+                        <label class="text-xs text-blue-800 font-bold uppercase">1. Definir estado del caso:</label>
+                        <select id="input-estado" class="w-full p-2 border rounded text-sm bg-white mt-1 outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="En Proceso">En Proceso (Seguir trabajando)</option>
+                            <option value="Cerrado">Cerrado (Finalizar caso)</option>
+                        </select>
+                    </div>
+                    <label class="text-xs text-blue-800 font-bold uppercase ml-1">2. Redactar mensaje:</label>
+                    <textarea id="input-respuesta" class="w-full p-2 border rounded h-28 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none mt-1 shadow-inner" placeholder="Escribe la actualización o solución detallada aquí..."></textarea>
+                    <button onclick="guardarRespuesta()" class="mt-4 w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700 transition shadow-md flex justify-center items-center">
+                        Guardar Gestión
+                    </button>
                 </div>
             </div>
-
-            <div id="seccion-respuesta" class="border-t pt-4">
-                <label class="block text-sm font-bold text-gray-800 mb-2">Agregar Nueva Respuesta / Actualización:</label>
-
-                <div class="mb-3 bg-blue-50 p-3 rounded border border-blue-100">
-                    <label class="text-xs text-blue-800 font-bold uppercase">1. Definir estado del caso:</label>
-                    <select id="input-estado" class="w-full p-2 border rounded text-sm bg-white mt-1 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="En Proceso">En Proceso (Seguir trabajando)</option>
-                        <option value="Cerrado">Cerrado (Finalizar caso)</option>
-                    </select>
-                </div>
-                
-                <label class="text-xs text-blue-800 font-bold uppercase ml-1">2. Redactar mensaje:</label>
-                <textarea id="input-respuesta" class="w-full p-2 border rounded h-28 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none mt-1 shadow-inner" placeholder="Escribe la actualización o solución detallada aquí..."></textarea>
-                
-                <button onclick="guardarRespuesta()" class="mt-4 w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700 transition shadow-md flex justify-center items-center">
-                    Guardar Gestión
-                </button>
-            </div>
-
         </div>
     </div>
-</div>
-</div>
+
     <script src="script.js"></script>
-<div id="msg-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
-    <div class="bg-white p-6 rounded-lg shadow-2xl w-96 transform transition-all scale-100 border-t-4 border-blue-600" id="msg-modal-content">
-        <div class="flex justify-center mb-4" id="msg-icon">
-            </div>
-        
-        <h3 id="msg-title" class="text-xl font-bold text-center text-gray-800 mb-2">Notificación</h3>
-        <p id="msg-body" class="text-gray-600 text-center mb-6">Mensaje aquí...</p>
-        
-        <button onclick="cerrarMensaje()" class="w-full bg-blue-600 text-white py-2 rounded-md font-bold hover:bg-blue-700 transition shadow-md">
-            Aceptar
-        </button>
-    </div>
-</div>
-<div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900 bg-opacity-70 flex flex-col items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300">
-    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
-    <h2 class="text-white text-xl font-semibold animate-pulse">Procesando, por favor espera...</h2>
-</div>
 
-<div id="modal-admin-noticias" class="hidden fixed inset-0 bg-slate-900 bg-opacity-80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+    <div id="msg-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-lg shadow-2xl w-96 transform transition-all scale-100 border-t-4 border-blue-600" id="msg-modal-content">
+            <div class="flex justify-center mb-4" id="msg-icon"></div>
+            <h3 id="msg-title" class="text-xl font-bold text-center text-gray-800 mb-2">Notificación</h3>
+            <p id="msg-body" class="text-gray-600 text-center mb-6">Mensaje aquí...</p>
+            <button onclick="cerrarMensaje()" class="w-full bg-blue-600 text-white py-2 rounded-md font-bold hover:bg-blue-700 transition shadow-md">Aceptar</button>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900 bg-opacity-70 flex flex-col items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+        <h2 class="text-white text-xl font-semibold animate-pulse">Procesando, por favor espera...</h2>
+    </div>
+
+    <div id="modal-admin-noticias" class="hidden fixed inset-0 bg-slate-900 bg-opacity-80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="bg-slate-800 p-4 flex justify-between items-center text-white shrink-0">
                 <h3 class="font-bold text-lg"><i class="fas fa-newspaper mr-2"></i>Gestión de Noticias (Plan Pro)</h3>
@@ -221,7 +211,6 @@
             </div>
             
             <div class="p-6 overflow-y-auto bg-gray-50 flex-grow">
-                
                 <div id="vista-lista-noticias">
                     <div class="flex justify-between items-center mb-4">
                         <p class="text-sm text-gray-600 font-semibold">Noticias publicadas: <span id="contador-noticias" class="text-blue-600 font-bold">0</span> / 4</p>
@@ -239,15 +228,15 @@
                                     <th class="p-3 font-bold text-gray-600 text-center">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="tabla-admin-noticias">
-                                </tbody>
+                            <tbody id="tabla-admin-noticias"></tbody>
                         </table>
                     </div>
                 </div>
 
                 <div id="vista-form-noticia" class="hidden bg-white p-6 rounded-lg border shadow-sm">
                     <button onclick="volverListaNoticias()" class="text-blue-600 hover:underline text-sm font-bold mb-4"><i class="fas fa-arrow-left mr-1"></i> Volver a la lista</button>
-                    
+                    <input type="hidden" id="noti-id" value="">
+                        
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase">Título de la Noticia</label>
@@ -271,17 +260,16 @@
                             <input type="date" id="noti-fecha" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase">Imagen Adjunta</label>
-                            <input type="file" id="noti-imagen" accept="image/png, image/jpeg, image/webp" class="w-full p-1.5 border rounded text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
+                            <label class="text-xs font-bold text-gray-500 uppercase">URL de la Imagen</label>
+                            <input type="url" id="noti-imagen" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://ejemplo.com/mifoto.jpg">
                         </div>
                         <div class="col-span-2">
                             <label class="text-xs font-bold text-gray-500 uppercase">Contenido Completo</label>
                             <textarea id="noti-contenido" class="w-full p-2 border rounded h-32 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Escribe todo el detalle aquí..."></textarea>
                         </div>
                     </div>
-                    <button onclick="guardarNoticiaPro()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold p-3 rounded-lg shadow-md transition">Publicar Noticia</button>
+                    <button id="btn-guardar-noti" onclick="guardarNoticiaPro()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold p-3 rounded-lg shadow-md transition">Publicar Noticia</button>
                 </div>
-
             </div>
         </div>
     </div>
@@ -292,8 +280,9 @@
                 <h3 class="font-bold text-lg"><i class="fas fa-cogs mr-2"></i>Configurar Formulario</h3>
                 <button onclick="cerrarModalGeneral('modal-admin-config')" class="hover:text-red-400 text-2xl leading-none">&times;</button>
             </div>
+            
             <div class="p-6 bg-gray-50">
-                <p class="text-xs text-gray-500 mb-4">Configura el formulario de Google Forms o Reservas que se mostrará en la Cartelera Digital.</p>
+                <p class="text-xs text-gray-500 mb-4">Configura el formulario y los teléfonos de la Cartelera Digital.</p>
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">Título de la sección</label>
@@ -303,10 +292,54 @@
                         <label class="text-xs font-bold text-gray-500 uppercase">URL del Formulario (iframe)</label>
                         <input type="url" id="conf-url-form" class="w-full p-2.5 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://docs.google.com/forms/...">
                     </div>
+                    
+                    <hr class="border-gray-300">
+                    <p class="text-xs text-gray-500 font-bold uppercase mt-2">Directorio de Contactos</p>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Teléfono Administración</label>
+                        <input type="text" id="conf-tel-admin" class="w-full p-2.5 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: 3001234567">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Teléfono Portería</label>
+                        <input type="text" id="conf-tel-porteria" class="w-full p-2.5 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: 6012345678 ext 1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Teléfono Emergencias</label>
+                        <input type="text" id="conf-tel-emergencia" class="w-full p-2.5 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: 123 o 119">
+                    </div>
                 </div>
                 <button onclick="guardarConfiguracionPro()" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-lg shadow-md transition">Guardar Cambios</button>
             </div>
         </div>
     </div>
+
+    <div id="modal-directorio" class="hidden fixed inset-0 bg-slate-900 bg-opacity-80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg"><i class="fas fa-address-book mr-2"></i>Contactos del Conjunto</h3>
+                <button onclick="cerrarModalGeneral('modal-directorio')" class="hover:text-blue-200 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-6 bg-gray-50 space-y-4">
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center">
+                    <div class="bg-blue-100 text-blue-600 p-3 rounded-full mr-4"><i class="fas fa-user-tie text-xl"></i></div>
+                    <div><p class="text-xs text-gray-500 font-bold uppercase">Administración</p><p id="dir-admin" class="text-lg font-bold text-gray-800">Cargando...</p></div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center">
+                    <div class="bg-green-100 text-green-600 p-3 rounded-full mr-4"><i class="fas fa-shield-alt text-xl"></i></div>
+                    <div><p class="text-xs text-gray-500 font-bold uppercase">Portería</p><p id="dir-porteria" class="text-lg font-bold text-gray-800">Cargando...</p></div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center">
+                    <div class="bg-red-100 text-red-600 p-3 rounded-full mr-4"><i class="fas fa-ambulance text-xl"></i></div>
+                    <div><p class="text-xs text-gray-500 font-bold uppercase">Emergencias</p><p id="dir-emergencia" class="text-lg font-bold text-gray-800">Cargando...</p></div>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-white border-t text-center">
+                <button onclick="cerrarModalGeneral('modal-directorio')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
